@@ -1,0 +1,4 @@
+/search-fts5
+*.db
+*.db-wal
+*.db-shm
