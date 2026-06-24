@@ -219,12 +219,17 @@ func (s *server) getIndex(uid string) (*indexMeta, bool) {
 // ---- routing --------------------------------------------------------------
 
 func (s *server) route(w http.ResponseWriter, r *http.Request) {
-	if !s.authOK(r) {
+	p := strings.Trim(r.URL.Path, "/")
+	seg := strings.Split(p, "/")
+
+	// /health and /version are unauthenticated (as in real Meilisearch) so
+	// k8s liveness/readiness probes and the chat /enable check work without a
+	// key. Everything else requires the master key when one is configured.
+	public := p == "health" || p == "version"
+	if !public && !s.authOK(r) {
 		writeJSON(w, http.StatusForbidden, meiliErr("invalid_api_key", "The provided API key is invalid.", "auth"))
 		return
 	}
-	p := strings.Trim(r.URL.Path, "/")
-	seg := strings.Split(p, "/")
 
 	switch {
 	case p == "health" && r.Method == http.MethodGet:

@@ -75,6 +75,33 @@ func TestHealth(t *testing.T) {
 	}
 }
 
+// TestHealthPublicWithAuth ensures /health and /version stay unauthenticated
+// even when a master key is set, so k8s probes (which send no key) pass. This
+// is the bug that 403'd the readiness probe on first deploy.
+func TestHealthPublicWithAuth(t *testing.T) {
+	db := openTestDB(t)
+	s := &server{db: db, apiKey: "secret", indexes: map[string]*indexMeta{}}
+	if err := s.initMeta(); err != nil {
+		t.Fatal(err)
+	}
+	mux := http.NewServeMux()
+	mux.HandleFunc("/", s.route)
+	ts := httptest.NewServer(mux)
+	defer ts.Close()
+
+	for _, p := range []string{"/health", "/version"} {
+		resp, _ := do(t, "GET", ts.URL+p, nil) // no Authorization header
+		if resp.StatusCode != 200 {
+			t.Fatalf("%s with auth set but no key: status=%d (want 200)", p, resp.StatusCode)
+		}
+	}
+	// a protected path must still 403 without the key
+	resp, _ := do(t, "GET", ts.URL+"/indexes/convos", nil)
+	if resp.StatusCode != 403 {
+		t.Fatalf("protected path without key: status=%d (want 403)", resp.StatusCode)
+	}
+}
+
 func TestIndexNotFoundThenCreate(t *testing.T) {
 	ts := newTestServer(t)
 	defer ts.Close()
