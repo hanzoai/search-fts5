@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	_ "modernc.org/sqlite"
+	_ "github.com/hanzoai/sqlite"
 )
 
 // newTestServer spins the shim against a temp SQLite file and returns an

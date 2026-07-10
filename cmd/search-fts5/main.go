@@ -44,7 +44,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	_ "modernc.org/sqlite"
+	_ "github.com/hanzoai/sqlite"
 )
 
 const version = "0.1.0"
