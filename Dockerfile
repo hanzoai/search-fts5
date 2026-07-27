@@ -1,6 +1,10 @@
 # Pure-Go build (modernc.org/sqlite — no CGO, FTS5 compiled in). Multi-arch via
 # the platform args the builder injects; arcd builds linux/amd64 for hanzo-k8s.
-FROM --platform=$BUILDPLATFORM golang:1.23-alpine AS build
+# golang:1.26 — go.mod declares `go 1.26.4`. On 1.23 the build died with
+#   go: go.mod requires go >= 1.26.4 (running go 1.23.12; GOTOOLCHAIN=local)
+# GOTOOLCHAIN=local in the image means it will not self-upgrade, so the base
+# image has to satisfy the directive itself.
+FROM --platform=$BUILDPLATFORM golang:1.26-alpine AS build
 ARG TARGETOS
 ARG TARGETARCH
 WORKDIR /src
